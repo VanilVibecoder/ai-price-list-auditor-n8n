@@ -1,0 +1,35 @@
+name: Restore workflow JSON
+
+on:
+  push:
+    paths:
+      - "workflow/ai-price-list-auditor.json.gz.b64"
+      - "workflow/restore-workflow.py"
+      - ".github/workflows/restore-workflow.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore workflow JSON
+        run: python workflow/restore-workflow.py
+
+      - name: Commit restored workflow
+        run: |
+          if git diff --quiet -- workflow/ai-price-list-auditor.json && [ -f workflow/ai-price-list-auditor.json ]; then
+            echo "Workflow JSON is already up to date."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add workflow/ai-price-list-auditor.json
+          git commit -m "workflow: restore importable n8n JSON"
+          git push
